@@ -1,0 +1,5 @@
+# Build artifact from `make` — regenerated locally.
+*.o
+
+# Generated from the running kernel's BTF by `make`; large and host-specific.
+/include/vmlinux.h
