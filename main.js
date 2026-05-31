@@ -18,7 +18,10 @@ const BSS_SEC = "usbsnoop.bss";
 const args = (typeof yeet !== "undefined" && yeet.args) || {};
 /* yeet normalizes `--kebab-case` flags to snake_case keys on yeet.args
  * (e.g. `--max-data` → args.max_data), so read those forms. */
-const SECS = Number(args.secs ?? args.s ?? 600);
+/* Run until Ctrl-C by default; a numeric --secs sets a fixed duration and
+ * prints the per-device summary + latency histogram on that timed exit. */
+const rawSecs = args.secs ?? args.s;
+const SECS = rawSecs == null ? null : Number(rawSecs);
 const MAX_DATA = Number(args.max_data ?? 4096);
 const CAPTURE = !parseBool(args.no_data);
 const ERRORS_ONLY = parseBool(args.errors_only ?? args.errors);
@@ -672,7 +675,7 @@ try {
   if (!JSON_OUT) {
     log(
       `${bold("usbsnoop")} — watching usb_submit_urb / usb_hcd_giveback_urb ` +
-        `for ${SECS}s  ${meta(`(${filters.length ? filters.join(" ") : "all devices"}${CAPTURE ? "" : ", no-data"})`)}`,
+        `${SECS == null ? "until interrupted" : `for ${SECS}s`}  ${meta(`(${filters.length ? filters.join(" ") : "all devices"}${CAPTURE ? "" : ", no-data"})`)}`,
     );
     log(`${meta("Ctrl-C to stop. URB buffers are read from kernel memory by yeetd.")}`);
     if (CAPTURE && (!KVA_PAGE_OFFSET || !KVA_VMEMMAP)) {
@@ -696,18 +699,20 @@ try {
    * await keeps the module in the "evaluating" state, and console output
    * is only flushed to a non-TTY sink once evaluation completes — so
    * `yeet run | cat` would print nothing until exit. Let top-level
-   * resolve here (the pending timer and the live subscription keep the
-   * isolate alive) so events stream as they arrive. */
-  setTimeout(async () => {
-    try {
-      await knobs.patch({ enabled: 0 });
-      await sub.unsubscribe();
-      await control.stop();
-      printSummary();
-    } catch (err) {
-      console.error(err);
-    }
-  }, SECS * 1000);
+   * resolve here (the live subscription, and the teardown timer when one is
+   * set, keep the isolate alive) so events stream as they arrive. */
+  if (SECS != null) {
+    setTimeout(async () => {
+      try {
+        await knobs.patch({ enabled: 0 });
+        await sub.unsubscribe();
+        await control.stop();
+        printSummary();
+      } catch (err) {
+        console.error(err);
+      }
+    }, SECS * 1000);
+  }
 } catch (err) {
   console.error(err);
 }

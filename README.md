@@ -82,8 +82,8 @@ with BTF.
 ## Run
 
 ```sh
-yeet run .                              # all devices, 600s
-yeet run . -- --secs 30                 # run for 30s
+yeet run .                              # all devices, runs until Ctrl-C
+yeet run . -- --secs 30                 # stop after 30s (prints a summary)
 yeet run . -- --vid 0x320f              # one vendor
 yeet run . -- --vendor-id 0x046d --product-id 0xc52b # one device by id
 yeet run . -- --bus 3 --dev 4           # one device by bus address
@@ -99,7 +99,7 @@ yeet run . -- --json | jq .             # NDJSON, one object per event
 
 | flag           | default | meaning                                              |
 | -------------- | ------- | ---------------------------------------------------- |
-| `--secs`       | `600`   | how long to run                                      |
+| `--secs`       | forever | how long to run; omit to run until Ctrl-C (a number stops + prints a summary) |
 | `--vid`, `--vendor-id`  | any | filter by vendor id (hex `0x1d6b` or decimal)    |
 | `--pid`, `--product-id` | any | filter by product id                             |
 | `--bus`        | any     | filter by bus number                                 |
