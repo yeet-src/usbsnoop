@@ -22,17 +22,6 @@ Control transfers get their 8-byte SETUP packet decoded into the standard
 request name (`GET_DESCRIPTOR`, `SET_CONFIGURATION`, …); data stages render as
 text when they look textual and as a hexdump otherwise.
 
-```
-usbsnoop — watching usb_submit_urb / usb_hcd_giveback_urb for 600s  (all devices)
-Ctrl-C to stop. URB buffers are read from kernel memory by yeetd.
-
-TIME         KIND   DEV TYPE EP          BYTES STATUS    LAT DRIVER
-▸ 3-4  320f:5000  RGB Keyboard  high
-17:40:33.018 SUBMIT 3-4 CTRL ep0in →       79B req           usb_api_blocking_completion  · GET_DESCRIPTOR std/interface IN  wValue=0x2200 wLength=79  REPORT#0
-17:40:33.018 CMPLT  3-4 CTRL ep0in ←    79/79B OK        268us usb_api_blocking_completion  · 05 01 09 06 a1 01 05 07 19 e0 29 e7 +67B
-17:40:33.160 CMPLT  3-4 INT  ep1in ←      8/8B OK       16.9ms hid_irq_in  · 00 00 14 00 00 00 00 00
-```
-
 Output is **one line per event** (compact). The first time a device appears it
 gets a `▸` legend line (`bus-dev`, `vid:pid`, product, link speed); after that
 each row carries only the short `DEV` tag, so the left-hand columns stay aligned
@@ -65,7 +54,22 @@ plain.
 - **Performance triage** — on a timed exit you get a per-device rollup and a
   log2 latency histogram to find the slow or chatty devices.
 
+## Install
+
+```sh
+curl -fsSL https://yeet.cx | sh
+```
+
+Then run it straight from GitHub — yeet fetches the example and builds it for
+you, no clone needed:
+
+```sh
+yeet run github:yeet-src/usbsnoop
+```
+
 ## Build
+
+To build from a local checkout instead:
 
 ```sh
 make

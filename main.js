@@ -92,6 +92,7 @@ const yel = (s) => style.yellow(String(s));
 const blu = (s) => style.blue(String(s));
 const mag = (s) => style.magenta(String(s));
 const cyan = (s) => style.cyan(String(s));
+const dim = (s) => style.dim(String(s));
 /* Secondary scaffolding (timestamps, field labels, offsets, separators) in
  * blue — a calm palette color rather than washed-out gray. The driver and
  * truncation markers get their own accents (magenta / yellow) at the call
@@ -532,7 +533,7 @@ function onEvent(e) {
   }
 
   const line = [
-    meta(hhmmss()),
+    dim(hhmmss()),
     kcol(kind),
     bold(dev.padStart(W_DEV)),
     xcol(xfer.padEnd(4)),
