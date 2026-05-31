@@ -95,13 +95,6 @@ yeet run . -- --hex                      # full multi-line hexdump per transfer
 yeet run . -- --json | jq .             # NDJSON, one object per event
 ```
 
-**No `sudo`.** The `yeetd` daemon already holds the privilege (`CAP_BPF` +
-`CAP_PERFMON`) and reads the URB buffers from kernel memory; the `yeet run`
-client just talks to it over its user socket, so you run it as your normal user.
-The only thing that still wants root is reading the two kallsyms base addresses
-for scatter-gather payloads (see below) — `/proc/kallsyms` redacts addresses for
-non-root unless `kptr_restrict` is `0`.
-
 ## Flags
 
 | flag           | default | meaning                                              |
