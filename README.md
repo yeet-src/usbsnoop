@@ -1,3 +1,4 @@
+<!-- yeet:user-friendly-title: Trace live USB traffic -->
 # usbsnoop — live USB transfer sniffer from two fentry hooks
 
 ![usbsnoop demo](assets/demo.gif)
