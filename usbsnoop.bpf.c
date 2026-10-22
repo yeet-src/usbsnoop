@@ -57,7 +57,7 @@
  * segment size) so page-sized segments copy whole; a larger segment is clipped
  * to SG_CHUNK. MAX_SG_SEGS bounds the loop — payload past it is truncated. */
 #define SG_CHUNK     4096
-#define MAX_SG_SEGS  64
+#define MAX_SG_SEGS  16
 #define PAGE_SHIFT   12           /* x86-64 base page */
 
 /* scatterlist.page_link low bits (linux/scatterlist.h): bit0 marks a chain

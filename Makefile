@@ -1,20 +1,23 @@
 .PHONY: all clean
 
-# A failed/interrupted bpftool dump must not leave a partial vmlinux.h
-# behind — make would treat the half-written file as up to date and the
-# build would fail confusingly downstream. Delete targets on recipe error.
+# A failed/interrupted bpftool dump must not leave a partial vmlinux.h behind.
 .DELETE_ON_ERROR:
 
-ARCH    ?= $(shell uname -m | sed 's/x86_64/x86/; s/aarch64/arm64/')
-CLANG   ?= clang
-BPFTOOL ?= sudo bpftool
+# `make` must build, not fetch the toolchain, so pin the goal before the include.
+.DEFAULT_GOAL := all
 
-# Prefer the bpf headers that ship with libbpf-sys (so this builds without
-# system libbpf-dev). Fall back to /usr/include if the libbpf-sys build
-# artifact isn't around.
-LIBBPF_INCLUDE := $(firstword $(wildcard \
-    ../../crates/target/release/build/libbpf-sys-*/out/include) \
-    /usr/include)
+# Resolve clang, bpftool and the libbpf headers from yeet's vendored toolchain
+# cache (fetched on demand by the `toolchain` target) — no system BPF toolchain
+# needed. A `make CLANG=…` / `BPFTOOL=…` override still wins.
+include build/toolchain.mk
+
+ARCH    ?= $(shell uname -m | sed 's/x86_64/x86/; s/aarch64/arm64/')
+# PATH fallbacks, used only when toolchain.mk resolved nothing (off-Linux).
+CLANG   ?= clang
+BPFTOOL ?= bpftool
+
+# Prefer the vendored libbpf headers; fall back to system libbpf-dev on PATH.
+LIBBPF_INCLUDE ?= $(if $(BPF_SYSINCLUDE),$(BPF_SYSINCLUDE),/usr/include)
 
 CFLAGS = -O2 -g -Wall -target bpf \
          -D__TARGET_ARCH_$(ARCH) \
@@ -22,14 +25,11 @@ CFLAGS = -O2 -g -Wall -target bpf \
 
 all: usbsnoop.bpf.o
 
-# struct urb, usb_device, usb_host_endpoint, the usb_device_descriptor and
-# the usb_device_speed enum all come from the running kernel's BTF — CO-RE,
-# no system linux/usb.h needed.
-include/vmlinux.h:
-	@mkdir -p include
-	$(BPFTOOL) btf dump file /sys/kernel/btf/vmlinux format c > $@
+# struct urb, usb_device, … come from the running kernel's BTF (CO-RE).
+include/vmlinux.h: | toolchain
+	sh build/gen-vmlinux.sh $(BPFTOOL) $@
 
-usbsnoop.bpf.o: usbsnoop.bpf.c include/vmlinux.h
+usbsnoop.bpf.o: usbsnoop.bpf.c include/vmlinux.h | toolchain
 	$(CLANG) $(CFLAGS) -c $< -o $@
 
 clean:
